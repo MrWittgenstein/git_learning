@@ -131,11 +131,194 @@ $ git push -u origin main
 从现在起，只要本地作了提交，就可以通过命令
 
 ```bash
-$ git push origin master
+$ git push origin main
 ```
 
-把本地`master`分支的最新修改推送至GitHub
+把本地`main`分支的最新修改推送至GitHub
 
 
 
 想删除远程库，可以用 `git remote rm <name>` 命令。使用前，建议先用 `git remote -v` 查看远程库信息
+
+## 从远程库克隆
+
+用命令 `git clone` 克隆一个本地库
+
+```bash
+$ git clone 地址
+```
+
+## 分支管理
+
+### 创建合并分支
+
+我们创建`dev`分支，然后切换到`dev`分支：
+
+```bash
+$ git checkout -b dev
+```
+
+相当于以下两条命令：
+
+```bash
+$ git branch dev
+$ git checkout dev
+```
+
+__或__  创建并切换到新的 `dev` 分支，可以使用：
+
+```bash
+$ git switch -c dev
+```
+
+
+
+然后 `git add` 和 `git commit` 提交
+
+`dev` 分支的工作完成，我们就可以切换回 `main` 分支：
+
+```bash
+$ git checkout main
+```
+
+__或__  直接切换到已有的 `main` 分支，可以使用：
+
+```bash
+$ git switch main
+```
+
+
+
+把`dev`分支的工作成果合并到 `main` 分支上：
+
+`git merge` 命令用于合并指定分支到当前分支
+
+```bash
+$ git merge dev
+Updating e621b84..9358e4c
+Fast-forward
+ readme.txt | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+```
+
+上面的`Fast-forward`信息，Git告诉我们，这次合并是“快进模式”，也就是直接把`master`指向`dev`的当前提交，所以合并速度非常快
+
+
+
+删除 `dev` 分支了：
+
+```bash
+$ git branch -d dev
+```
+
+
+
+查看分支： `git branch`
+
+### 解决冲突
+
+发生冲突时，用 `cat <文件名>直接查看内容
+
+Git用`<<<<<<<`，`=======`，`>>>>>>>`标记出不同分支的内容
+
+修改解决冲突后再提交
+
+用 `git log --graph` 命令可以看到分支合并图
+
+### 分支管理策略
+
+通常，合并分支时，如果可能，Git会用`Fast forward`模式，但这种模式下，删除分支后，会丢掉分支信息。
+
+如果要强制禁用`Fast forward`模式，Git就会在merge时生成一个新的commit，这样，从分支历史上就可以看出分支信息。
+
+合并`dev`分支时，注意`--no-ff`参数，表示禁用`Fast forward`
+
+```bash
+$ git merge --no-ff -m "merge with no-ff" dev
+```
+
+### Bug分支
+
+Git提供了一个`stash`功能，可以把当前工作现场“储藏”起来，等以后恢复现场后继续工作
+
+现在，用`git status`查看工作区，就是干净的（除非有没有被Git管理的文件），因此可以放心地创建分支来修复bug。
+
+首先确定要在哪个分支上修复bug，假定需要在`main`分支上修复，就从`main`创建临时分支`issue101`
+
+修改后提交，切换到`main`分支，并合并，删除分支`issue101`
+
+用`git stash list`命令查看stash内容
+
+恢复方法：一是用`git stash apply`恢复，但是恢复后，`stash`内容并不删除，你需要用`git stash drop`来删除
+
+​	另一种方式是用`git stash pop`，恢复的同时把`stash`内容也删了
+
+
+
+在`master`分支上修复了bug后，同样的bug，要在`dev`上修复，
+
+Git专门提供了一个`cherry-pick`命令，让我们能复制一个特定的提交到当前分支
+
+```bash
+$ git cherry-pick <commit_id>
+```
+
+### Feature分支
+
+每添加一个新功能，最好新建一个feature分支，在上面开发，完成后，合并，最后，删除该feature分支
+
+如果要丢弃一个没有被合并过的分支，可以通过`git branch -D <name>`强行删除
+
+## 标签
+
+首先，切换到需要打标签的分支上
+
+敲命令`git tag <name>`就可以打一个新标签
+
+```bash
+$ git tag <tagname>
+```
+
+给历史提交的commit打标签，找到历史提交的commit id，敲入命令：
+
+```bash
+$ git tag <tagname> <commit_id>
+```
+
+创建带有说明的标签，用`-a`指定标签名，`-m`指定说明文字：
+
+```bash
+$ git tag -a <tagname> -m "*****" <commit_id>
+```
+
+用命令`git show <tagname>`可以看到说明文字
+
+命令`git tag`可以查看所有标签
+
+删除标签
+
+```bash
+$ git tag -d <tagname>
+```
+
+推送某个标签到远程，使用命令`git push origin <tagname>`
+
+一次性推送全部尚未推送到远程的本地标签：
+
+```bash
+$ git push origin --tags
+```
+
+如果标签已经推送到远程，
+
+要删除远程标签就麻烦一点，先从本地删除：
+
+```bash
+$ git tag -d <tagname>
+```
+
+然后，从远程删除。删除命令也是push，但是格式如下：
+
+```bash
+$ git push origin :refs/tags/<tagname>
+```
