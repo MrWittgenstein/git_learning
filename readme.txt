@@ -1,4 +1,1 @@
-lalalalalala
-the next step!
-second time change
-third change
+a txt file used for learning Git
